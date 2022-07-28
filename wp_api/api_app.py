@@ -17,7 +17,7 @@ import base64
 import datetime
 import json
 import os.path
-from typing import Optional
+from typing import Optional, List
 
 import requests
 
@@ -60,17 +60,19 @@ class WP_API:
 
     def delete_all_my(self, noun):
         all_my_things = self.get_all_my_things(noun)
-        for thing in all_my_things:
+        deletable_ids = {x["id"] for x in all_my_things
+                         if x["id"] != 1 or noun != "categories"}
+        for thing_id in deletable_ids:
             del_result = self.delete(
-                "{}/{}?force=true".format(noun, thing["id"]))
+                "{}/{}?force=true".format(noun, thing_id))
             assert del_result.ok
         number_after_deletion = len(self.get_all_my_things(noun))
         return len(all_my_things), number_after_deletion
 
-    def get_all_my_things(self, noun) -> list:
+    def get_all_my_things(self, noun) -> List[dict]:
         my_id = self.fetch_one("users/me", {})["id"]
         all_my_things = self.fetch_all(noun, {"author": my_id})
-        if noun != "media":
+        if noun == "posts":
             all_my_things += self.fetch_all(
                 noun, {"author": my_id, "status": "draft"})
         return all_my_things
@@ -89,14 +91,11 @@ class WP_API:
         :param plural_noun: "categories" or "tags"
         :param name: Aiming for self documenting variable names here.
         :param description: As if the brief name doesn't say enough.
-        :param slug: typically a stringified version of name, can be omitted
-            and generated on the fly from the name. Replaces spaces and strokes
-            with hyphens.
+        :param slug: typically a stringified version of name, can be omitted,
+            the server will provide one.
         :param parent_category: NA to tags. Optional in any case.
         :return: response
         """
-        if slug is None:
-            slug = name.lower().replace("/", "-").replace(" ", "-")
         json = {
             "name": name,
             "description": description,
@@ -108,7 +107,12 @@ class WP_API:
         return response
 
     @staticmethod
-    def get_wp_time(any_dt: datetime):
+    def default_slug(name: str) -> str:
+        """Replaces spaces and strokes with hyphens."""
+        return name.lower().replace("/", "-").replace(" ", "-")
+
+    @staticmethod
+    def get_wp_time(any_dt: datetime) -> str:
         return any_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
     def append_results(self, noun: str, page: int, results: list,

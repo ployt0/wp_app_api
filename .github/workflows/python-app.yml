@@ -102,4 +102,4 @@ jobs:
     - name: Test coverage
       run: |
         cd tests
-        PYTHONPATH=.. coverage report -m --fail-under=85
+        PYTHONPATH=.. coverage report -m --fail-under=95

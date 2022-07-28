@@ -87,7 +87,7 @@ SHELL
 cd /vagrant/tests
 export PYTHONPATH=/vagrant
 /home/vagrant/.local/bin/coverage run --source="../wp_api" -m pytest
-/home/vagrant/.local/bin/coverage report -m --fail-under=85
+/home/vagrant/.local/bin/coverage report -m --fail-under=95
 SHELL
 
 end

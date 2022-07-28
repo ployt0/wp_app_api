@@ -17,3 +17,14 @@ Enter application passwords.
 I have an application already using this, [wp_automations, which I should
 rename to img_compressor](https://github.com/ployt0/wp_automations), now that
 I am reliant on GitHub to run my tests.
+
+Please also see the tests for real examples. Run them with:
+
+```shell
+cd /vagrant/tests
+PYTHONPATH=.. pytest
+```
+
+I should probably break out unit tests that are able to run outside of the VM
+environment. But, this has got me to present my VM's Vagrantfile, which is
+at least as useful.

@@ -3,13 +3,10 @@ Component testing against the default server imported in WP_API (as
 config.json).
 """
 import datetime
+from typing import List
+from unittest.mock import patch, Mock, sentinel, mock_open
 
 from wp_api.api_app import WP_API
-
-# For use in naming stuff where we can't trace ownership to the user
-# who is running these tests, and we are testing against an in-use, shared,
-# installation.
-IDENTIFYING_PREFIX = "test220722_"
 
 
 def test_get_self_user():
@@ -48,12 +45,38 @@ def test_get_media():
     assert type(result) is list
 
 
+def test_unit_upload_media():
+    wp_api = WP_API()
+    wp_api.post = Mock(WP_API.post, return_value=sentinel.response)
+    mock_data = "data"
+    with patch("builtins.open", mock_open(read_data=mock_data)) as mock_file:
+        response = wp_api.upload_media("arbitrary.png", "creally.png")
+        mock_file.assert_called_once_with("arbitrary.png", "rb")
+    assert response == sentinel.response
+    wp_api.post.assert_called_once()
+    assert wp_api.post.mock_calls[0].kwargs["data"] == mock_data
+
+
 def test_upload_media():
     wp_api = WP_API()
     response = wp_api.upload_media("white_200x300.png", "white_200x300.png")
     assert response.ok
     response = wp_api.upload_media("white_200x1024.png", "white_200x1024.png")
     assert response.ok
+
+
+def test_upload_media_default_naming():
+    wp_api = WP_API()
+    media_path = "./white_200x300.png"
+    new_name = "white_200x300.png"
+    wp_api.post = Mock(WP_API.post, return_value=sentinel.response)
+    mock_data = "data"
+    with patch("builtins.open", mock_open(read_data=mock_data)) as mock_file:
+        response = wp_api.upload_media(media_path)
+    assert response == sentinel.response
+    wp_api.post.assert_called_once()
+    assert wp_api.post.mock_calls[0].kwargs["data"] == mock_data
+    assert wp_api.post.mock_calls[0].kwargs["headers"]['Content-Disposition'] == 'attachment; filename={}'.format(new_name)
 
 
 def test_categorised_create_post():
@@ -101,14 +124,14 @@ def test_delete_my_media():
     wp_api = WP_API()
     response = wp_api.upload_media("white_200x300.png", "white_200x300.png")
     assert response.ok
-    delete_all_my("media", wp_api)
+    assert 0 == delete_all_my("media", wp_api)
 
 
-def delete_all_my(noun, wp_api):
+def delete_all_my(noun: str, wp_api: WP_API) -> int:
     number_needing_deletion, number_after_deletion =\
         wp_api.delete_all_my(noun)
     assert number_needing_deletion >= number_after_deletion
-    assert number_after_deletion == 0
+    return number_after_deletion
 
 
 def test_get_wp_time():
@@ -120,25 +143,76 @@ def test_get_wp_time():
     assert t_str == '2022-06-02T18:00:00'
 
 
+def test_create_category():
+    wp_api = WP_API()
+    given_slug = "lemmesee"
+    response = wp_api.create_category_or_tag(
+        "categories", "test_name", "test_description can be wordier.",
+        given_slug, None
+    )
+    assert response.ok
+    assert response.json()["slug"] == given_slug
+
+
+def test_create_category_gen_slug():
+    wp_api = WP_API()
+    cat_name = "cat Manoba"
+    response = wp_api.create_category_or_tag(
+        "categories", cat_name, "test_description can be wordier."
+    )
+    assert response.ok
+    assert response.json()["slug"] == cat_name.lower().replace(" ", "-")
+
+
+def test_create_tag():
+    wp_api = WP_API()
+    response = wp_api.create_category_or_tag(
+        "tags", "test_name", "test_description can be wordier.",
+        "i_wonder", None
+    )
+    assert response.ok
+
+
+def test_fetch_all():
+    wp_api = WP_API()
+    assert 0 == delete_all_my("tags", wp_api)
+    for tag_no in range(15):
+        response = wp_api.create_category_or_tag(
+            "tags", "tag_name_{}".format(tag_no),
+            "test_description can be wordier."
+        )
+    result = wp_api.fetch_all("tags", {})
+    assert len(result) == 15
+
+
+def setup_module(module):
+    """It breaks tests if we already have the same tags or categories."""
+    wp_api = WP_API()
+    # delete_test_tags(wp_api)
+    assert 0 == delete_all_my("tags", wp_api)
+    assert 1 == delete_all_my("categories", wp_api)
+
+
 def teardown_module(module):
     """teardown any state after all tests herein have run."""
     wp_api = WP_API()
-    delete_all_my("media", wp_api)
-    delete_test_tags(wp_api)
-    delete_all_my("posts", wp_api)
+    assert 0 == delete_all_my("media", wp_api)
+    assert 0 == delete_all_my("tags", wp_api)
+    assert 0 == delete_all_my("posts", wp_api)
+    assert 1 == delete_all_my("categories", wp_api)
 
 
-def delete_test_tags(wp_api):
+def search_tags(wp_api, query_str: str) -> List[dict]:
     """
-    Requires greated privileges than Author.
-    Needs to be called before attempting to re-create a tag as auto
-    renaming does not happen for duplicate tag names.
+    I recall only editors can delete tags, whilst Authors can create them.
+    I wasn't sure if Authors really owned these, so I made them use
+    IDENTIFYING_PREFIX and retrieved them in this function.
+
+    Now I've got a dedicated test WP, and dedicated test Administrator.
+    It's just a common search function now.
     """
     # This *only* searches tag names and slugs, case insensitive:
     filtered_tag_list = wp_api.fetch_all(
-        "tags?search=" + IDENTIFYING_PREFIX, {})
-    for tag in filtered_tag_list:
-        if tag["name"].startswith(IDENTIFYING_PREFIX):
-            del_result = wp_api.delete("{}/{}".format("tags", tag["id"]))
-            assert del_result.ok
+        "tags?search=" + query_str, {})
+    return filtered_tag_list
 
