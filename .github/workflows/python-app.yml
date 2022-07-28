@@ -1,0 +1,111 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-22.04
+#    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest coverage
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check dir
+      run: |
+        ls -la
+
+    - name: Check ports
+      run: |
+        sudo ss -tulpn
+
+    - name: Spin up DB container
+      run: |
+        docker run --name mariadb -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d --restart unless-stopped mariadb:10.8.3-jammy
+
+    - name: Spin up WordPress container
+      run: |
+        # Query, can we expose on 0? Or localhost only?
+        docker run -p 80:80 -p 443:443 -p 127.0.0.1:8066:22 --name mywp -d --restart unless-stopped wordpress:6.0.1
+
+        mariadb_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mariadb)
+
+        sed -i "s/172.17.0.3/$mariadb_addy/" wp-config.php
+        docker cp wp-config.php mywp:/var/www/html/wp-config.php
+        docker cp ssl-params.conf mywp:/etc/apache2/conf-available/ssl-params.conf
+        docker cp wordpress.conf mywp:/etc/apache2/sites-available/wordpress.conf
+
+        docker exec -i mywp bash < wp_provisioning.sh
+        docker restart mywp
+        docker exec -i mywp /etc/init.d/ssh start
+
+    - name: Await return of mariadb container
+      run: |
+        while ! docker exec mariadb mysql -uroot -pmypass -e "SELECT 1" >/dev/null 2>&1; do
+            echo sleeping.
+            docker ps
+            sleep 1
+        done
+
+    - name: Grab TLS cert from WordPress
+      run: |
+        echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
+
+    - name: Use WP's IP for DB user
+      run: |
+        wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
+        echo "wp_addy = $wp_addy"
+        sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
+        cp tests/config_template.json tests/config.json
+        sed -i "s/localhost:8066/$wp_addy/" tests/config.json
+        cat tests/config.json
+        docker ps
+
+    - name: Grab WP's self-signed cert
+      run: |
+        echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
+
+    - name: Inject SQL scripts to MySQL
+      run: |
+        docker exec -i mariadb mysql -uroot -pmypass < wpdbsetup.sql
+        docker exec -i mariadb mysql -uroot -pmypass wordpress < full_db_220727_0953.sql
+
+    - name: Test with pytest
+      run: |
+        export PYTHONPATH=.
+        cd tests
+        pytest
+
+    - name: Test with pytest for coverage
+      run: |
+        cd tests
+        coverage run --source="../img_compressor,../wp_api" -m pytest
+
+    - name: Test coverage
+      run: |
+        cd tests
+        coverage report -m --fail-under=85

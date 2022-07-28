@@ -1,0 +1,14 @@
+{
+  "api": {
+    "host_url": "https://localhost:443",
+    "user": "Fred Test",
+    "password": "IAU8 cEuo eAb9 BNMO bv3N T0jV",
+    "cert_name": "../self-signed-cacert.crt"
+  },
+  "ssh": {
+    "host": "localhost:8066",
+    "username": "root",
+    "password": "password",
+    "wp_uploads": "/var/www/html/wp-content/uploads/"
+  }
+}

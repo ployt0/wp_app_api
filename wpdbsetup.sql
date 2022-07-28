@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS wordpress;
+CREATE USER IF NOT EXISTS wordpressuser232@'wpdockerip' IDENTIFIED BY 'galoshes';
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER ON wordpress.* TO wordpressuser232@'wpdockerip';
+FLUSH PRIVILEGES;
