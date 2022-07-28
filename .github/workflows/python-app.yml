@@ -94,10 +94,10 @@ jobs:
         docker exec -i mariadb mysql -uroot -pmypass < wpdbsetup.sql
         docker exec -i mariadb mysql -uroot -pmypass wordpress < full_db_220727_0953.sql
 
-    - name: Test with pytest
-      run: |
-        cd tests
-        PYTHONPATH=.. pytest -s
+#    - name: Test with pytest
+#      run: |
+#        cd tests
+#        PYTHONPATH=.. pytest -s
 
     - name: Test with pytest for coverage
       run: |
