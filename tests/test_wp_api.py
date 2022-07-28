@@ -4,14 +4,11 @@ config.json).
 """
 import datetime
 
-import sys
-print(sys.path)
-
 from wp_api.api_app import WP_API
 
-
 # For use in naming stuff where we can't trace ownership to the user
-# who is running these tests.
+# who is running these tests, and we are testing against an in-use, shared,
+# installation.
 IDENTIFYING_PREFIX = "test220722_"
 
 
@@ -120,7 +117,7 @@ def test_get_wp_time():
     assert t_str == '2022-12-02T18:00:00'
     t = datetime.datetime(2022, 6, 2, 18, 00)
     t_str = WP_API.get_wp_time(t)
-    assert t_str == '2022-06-02T18:00:00FFF'
+    assert t_str == '2022-06-02T18:00:00'
 
 
 def teardown_module(module):
