@@ -4,6 +4,9 @@ config.json).
 """
 import datetime
 
+import sys
+print(sys.path)
+
 from wp_api.api_app import WP_API
 
 

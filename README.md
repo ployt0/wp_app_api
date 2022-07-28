@@ -10,7 +10,7 @@ to learn PHP.
 
 Enter application passwords.
 
-![application passwords](app passwords.webp)
+![application passwords](app_passwords.webp)
 
 ## Usage
 

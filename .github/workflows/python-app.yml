@@ -96,16 +96,15 @@ jobs:
 
     - name: Test with pytest
       run: |
-        export PYTHONPATH=.
         cd tests
-        pytest
+        PYTHONPATH=.. pytest -s
 
     - name: Test with pytest for coverage
       run: |
         cd tests
-        coverage run --source="../img_compressor,../wp_api" -m pytest
+        PYTHONPATH=.. coverage run --source="../wp_api" -m pytest
 
     - name: Test coverage
       run: |
         cd tests
-        coverage report -m --fail-under=85
+        PYTHONPATH=.. coverage report -m --fail-under=85
