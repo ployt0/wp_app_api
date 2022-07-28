@@ -77,13 +77,8 @@ SHELL
 echo "colo ron" > ~/.vimrc
 SHELL
 
-  config.vm.provision "Check tests", type: "shell", privileged: false, inline: <<-SHELL
-pip install -r /vagrant/requirements.txt
-cd /vagrant/tests
-/home/vagrant/.local/bin/pytest
-SHELL
-
   config.vm.provision "Check coverage", type: "shell", privileged: false, inline: <<-SHELL
+pip install -r /vagrant/requirements.txt
 cd /vagrant/tests
 export PYTHONPATH=/vagrant
 /home/vagrant/.local/bin/coverage run --source="../wp_api" -m pytest
