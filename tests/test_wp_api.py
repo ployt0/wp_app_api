@@ -198,7 +198,9 @@ def teardown_module(module):
     wp_api = WP_API()
     assert 0 == delete_all_my("media", wp_api)
     assert 0 == delete_all_my("tags", wp_api)
+    # The sample post gets deleted first time.
     assert 0 == delete_all_my("posts", wp_api)
+    # Uncategorized can never be deleted.
     assert 1 == delete_all_my("categories", wp_api)
 
 
