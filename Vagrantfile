@@ -65,7 +65,6 @@ wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
 echo "wp_addy = $wp_addy"
 sed -i "s/wpdockerip/$wp_addy/" /home/vagrant/wpdbsetup.sql
 cp /vagrant/tests/config_template.json /vagrant/tests/config.json
-sed -i "s/localhost:8066/$wp_addy/" /vagrant/tests/config.json
 SHELL
 
   config.vm.provision "sql script", type: "shell", inline: <<-SHELL

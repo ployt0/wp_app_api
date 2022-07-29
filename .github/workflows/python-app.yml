@@ -5,6 +5,11 @@ name: Python application
 
 on:
   push:
+    paths-ignore:
+      - '**.md'
+      - '**.png'
+      - '**.jpg'
+      - '**.webp'
     branches: [ master ]
   pull_request:
     branches: [ master ]
@@ -13,7 +18,6 @@ jobs:
   build:
 
     runs-on: ubuntu-22.04
-#    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -81,8 +85,6 @@ jobs:
         echo "wp_addy = $wp_addy"
         sed -i "s/wpdockerip/$wp_addy/" wpdbsetup.sql
         cp tests/config_template.json tests/config.json
-        sed -i "s/localhost:8066/$wp_addy/" tests/config.json
-        cat tests/config.json
         docker ps
 
     - name: Grab WP's self-signed cert

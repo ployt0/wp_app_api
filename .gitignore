@@ -95,8 +95,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-private_config.json
 tests/gallery.html
-tests/config.json
 self-signed-cacert.crt
 tests/tmp
+**config.json
