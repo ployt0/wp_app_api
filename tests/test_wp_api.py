@@ -59,10 +59,39 @@ def test_unit_upload_media():
 
 def test_upload_media():
     wp_api = WP_API()
-    response = wp_api.upload_media("white_200x300.png", "white_200x300.png")
+    src_path = "white_200x300.png"
+    mime_type = {
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "webp": "image/webp",
+    }[src_path.split(".")[-1]]
+    desired_name = "white_200x300.png"
+    response = wp_api.upload_media(src_path, desired_name)
     assert response.ok
+    # Be happy we get json
+    jresp = response.json()
+    media_id = jresp["id"]
+    site_url = jresp["guid"]["rendered"].split("/wp-content")[0]
+    assert site_url == 'https://localhost:8542'
+    assert jresp["media_details"]["file"] == desired_name
     response = wp_api.upload_media("white_200x1024.png", "white_200x1024.png")
     assert response.ok
+
+
+def test_upload_media_video():
+    wp_api = WP_API()
+    src_path = "trim_muted_video.mkv"
+    desired_name = "trim_muted_video.mkv"
+    response = wp_api.upload_media(src_path, desired_name)
+    assert response.ok
+    # Be happy we get json
+    jresp = response.json()
+    media_id = jresp["id"]
+    site_url = jresp["guid"]["rendered"].split("/wp-content")[0]
+    assert site_url == 'https://localhost:8542'
+    media_details = jresp["media_details"]
+    mime_type = media_details["mime_type"]
 
 
 def test_upload_media_default_naming():
@@ -189,6 +218,7 @@ def setup_module(module):
     """It breaks tests if we already have the same tags or categories."""
     wp_api = WP_API()
     # delete_test_tags(wp_api)
+    assert 0 == delete_all_my("media", wp_api)
     assert 0 == delete_all_my("tags", wp_api)
     assert 1 == delete_all_my("categories", wp_api)
 

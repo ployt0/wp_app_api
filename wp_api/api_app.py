@@ -180,10 +180,18 @@ class WP_API:
         if new_name is None:
             new_name = os.path.basename(media_path)
         image_bytes = open(media_path, 'rb').read()
+        # "Accept" makes no discernible difference.
+        # "Content-Type" should be something, but WordPress will correct it.
+        mime_type = {
+            "png": "image/png",
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "webp": "image/webp",
+        }.get(media_path.split(".")[-1], "image/jpeg")
         headers = {
             **self.header,
             **{
-                "Content-Type": "image/jpeg",
+                "Content-Type": mime_type,
                 "Accept": "application/json",
                 "Content-Disposition": "attachment; filename=" + new_name,
             }}

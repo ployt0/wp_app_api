@@ -5,7 +5,7 @@ Vagrant.configure("2") do |config|
   config.vm.box_version = LOCKED_2004_BOX_VERSION
   config.vm.box_check_update = false
   config.vm.hostname = "testrunner"
-  config.vm.network :forwarded_port, guest: 443, host: 8543
+  config.vm.network :forwarded_port, guest: 443, host: 8542
   config.vm.network :forwarded_port, guest: 22, host: 8212, id: 'ssh'
 
   config.vm.provision "file", source: "wp_provisioning.sh", destination: "/home/vagrant/wp_provisioning.sh"
