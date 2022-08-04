@@ -74,7 +74,7 @@ def test_upload_media():
     media_id = jresp["id"]
     site_url = jresp["guid"]["rendered"].split("/wp-content")[0]
     assert site_url == 'https://localhost:8542'
-    assert jresp["media_details"]["file"] == desired_name
+    assert jresp["media_details"]["file"].endswith(desired_name)
     response = wp_api.upload_media("white_200x1024.png", "white_200x1024.png")
     assert response.ok
 
