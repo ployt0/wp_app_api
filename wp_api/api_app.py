@@ -17,7 +17,7 @@ import base64
 import datetime
 import json
 import os.path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 import requests
 
@@ -136,9 +136,9 @@ class WP_API:
         results.extend(response.json())
         return response.links
 
-    def fetch_one(self, endpoint: str, extra_params: dict) -> dict:
+    def fetch_one(self, endpoint: str, extra_params: Optional[Dict] = None)\
+            -> dict:
         """
-
         :param endpoint: to be added to the base host URL.
         :param extra_params: alias for requests.get's json.
         :return: the one object.
@@ -172,15 +172,14 @@ class WP_API:
         All the scaling we see with the web UI is performed, exactly the same,
         binary identical pngs.
 
-        :param media_path: src path
+        :param media_path: src path to image, or even video, maybe others.
         :param new_name: destination name, if omitted the basename of the source
-            (leaf node) is used.
+            (leaf node) is used. If provided the suffix must match.
         :return: json response as dict
         """
         if new_name is None:
             new_name = os.path.basename(media_path)
         image_bytes = open(media_path, 'rb').read()
-        # "Accept" makes no discernible difference.
         # "Content-Type" should be something, but WordPress will correct it.
         mime_type = {
             "png": "image/png",
@@ -188,6 +187,7 @@ class WP_API:
             "jpeg": "image/jpeg",
             "webp": "image/webp",
         }.get(media_path.split(".")[-1], "image/jpeg")
+        # "Accept" makes no discernible difference.
         headers = {
             **self.header,
             **{

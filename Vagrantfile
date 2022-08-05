@@ -76,6 +76,13 @@ SHELL
 echo "colo ron" > ~/.vimrc
 SHELL
 
+  config.vm.provision "Test or die", type: "shell", privileged: false, inline: <<-SHELL
+pip install -r /vagrant/requirements.txt
+cd /vagrant/tests
+export PYTHONPATH=/vagrant
+/home/vagrant/.local/bin/pytest
+SHELL
+
   config.vm.provision "Check coverage", type: "shell", privileged: false, inline: <<-SHELL
 pip install -r /vagrant/requirements.txt
 cd /vagrant/tests

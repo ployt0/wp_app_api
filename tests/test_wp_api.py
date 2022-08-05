@@ -60,12 +60,6 @@ def test_unit_upload_media():
 def test_upload_media():
     wp_api = WP_API()
     src_path = "white_200x300.png"
-    mime_type = {
-        "png": "image/png",
-        "jpg": "image/jpeg",
-        "jpeg": "image/jpeg",
-        "webp": "image/webp",
-    }[src_path.split(".")[-1]]
     desired_name = "white_200x300.png"
     response = wp_api.upload_media(src_path, desired_name)
     assert response.ok
@@ -106,6 +100,36 @@ def test_upload_media_default_naming():
     wp_api.post.assert_called_once()
     assert wp_api.post.mock_calls[0].kwargs["data"] == mock_data
     assert wp_api.post.mock_calls[0].kwargs["headers"]['Content-Disposition'] == 'attachment; filename={}'.format(new_name)
+
+
+def test_get_identified_media():
+    """
+    Ensures there are exactly 2 images on the server.
+
+    Queries each media my id.
+    """
+    wp_api = WP_API()
+    delete_all_my("media", wp_api)
+    src_path = "white_200x300.png"
+    desired_name1 = "white_200x300.png"
+    response = wp_api.upload_media(src_path, desired_name1)
+    assert response.ok
+    # Be happy we get json
+    media1_id = response.json()["id"]
+    desired_name2 = "gandalf_the_grey.png"
+    response = wp_api.upload_media("white_200x1024.png", desired_name2)
+    assert response.ok
+    media2_id = response.json()["id"]
+
+    get_resp = wp_api.get("media/{}".format(media1_id))
+    assert get_resp.ok
+    jresp2 = get_resp.json()
+    assert desired_name1 == jresp2["media_details"]["sizes"]["full"]["file"]
+
+    get_resp = wp_api.get("media/{}".format(media2_id))
+    assert get_resp.ok
+    jresp2 = get_resp.json()
+    assert desired_name2 == jresp2["media_details"]["sizes"]["full"]["file"]
 
 
 def test_categorised_create_post():
