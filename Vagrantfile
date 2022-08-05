@@ -84,7 +84,6 @@ export PYTHONPATH=/vagrant
 SHELL
 
   config.vm.provision "Check coverage", type: "shell", privileged: false, inline: <<-SHELL
-pip install -r /vagrant/requirements.txt
 cd /vagrant/tests
 export PYTHONPATH=/vagrant
 /home/vagrant/.local/bin/coverage run --source="../wp_api" -m pytest
