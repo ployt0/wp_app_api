@@ -103,10 +103,6 @@ jobs:
             sleep 1
         done
 
-    - name: Grab TLS cert from WordPress
-      run: |
-        echo quit | openssl s_client -showcerts -servername "localhost" -connect localhost:443 > self-signed-cacert.crt
-
     - name: Use WP's IP for DB user
       run: |
         wp_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mywp)
