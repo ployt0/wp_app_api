@@ -14,17 +14,44 @@ on:
   pull_request:
     branches: [ master ]
 
+  workflow_dispatch:
+    inputs:
+      python_version:
+        type: choice
+        description: Choose python version
+        required: true
+        options:
+          - "3.11"
+          - "3.10"
+        default: "3.10"
+      maria_tag:
+        default: "10.8.3-jammy"
+      wp_tag:
+        default: "6.0.1"
+  schedule:
+     - cron: '0 0 * * FRI'
+
 jobs:
   build:
 
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - name: Set the variables
+      env:
+        DEFAULT_PY_VERSION: '3.11'
+        DEFAULT_MARIA_TAG: "10.8.3-jammy"
+        DEFAULT_WP_TAG: "6.0.1"
+      run: |
+        echo "PY_VERS=${{ github.event.inputs.python_version || env.DEFAULT_PY_VERSION }}" >> $GITHUB_ENV
+        echo "MARIA_TAG=${{ github.event.inputs.maria_tag || env.DEFAULT_MARIA_TAG }}" >> $GITHUB_ENV
+        echo "WP_TAG=${{ github.event.inputs.wp_tag || env.DEFAULT_WP_TAG }}" >> $GITHUB_ENV
+    
+    - name: Set up ${{env.PY_VERS}}
+      uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: ${{env.PY_VERS}}
 
     - name: Install dependencies
       run: |
@@ -49,12 +76,12 @@ jobs:
 
     - name: Spin up DB container
       run: |
-        docker run --name mariadb -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d --restart unless-stopped mariadb:10.8.3-jammy
+        docker run --name mariadb -e MYSQL_ROOT_PASSWORD=mypass -p 3306:3306 -d --restart unless-stopped mariadb:${{env.MARIA_TAG}}
 
     - name: Spin up WordPress container
       run: |
         # Query, can we expose on 0? Or localhost only?
-        docker run -p 80:80 -p 443:443 -p 127.0.0.1:8066:22 --name mywp -d --restart unless-stopped wordpress:6.0.1
+        docker run -p 80:80 -p 443:443 -p 127.0.0.1:8066:22 --name mywp -d --restart unless-stopped wordpress:${{env.WP_TAG}}
 
         mariadb_addy=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' mariadb)
 
