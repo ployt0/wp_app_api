@@ -1,6 +1,6 @@
 # WP API
 
-![python-app workflow](https://github.com/ployt0/wp_app_api/actions/workflows/python-app.yml/badge.svg)
+![CI workflow](https://github.com/ployt0/wp_app_api/actions/workflows/CI.yml/badge.svg)
 
 I've been automating WordPress deployments for nearly a year now. Gives me
 something to blog about. I'd had no cause to automate my non-existent
