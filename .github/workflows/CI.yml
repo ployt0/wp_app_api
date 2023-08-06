@@ -129,3 +129,8 @@ jobs:
       run: |
         cd tests
         PYTHONPATH=.. coverage report -m --fail-under=95
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
